@@ -19,6 +19,7 @@ const LoadedDocument = new Promise((resolve) => {
 function infoMessage($info) {
   return {
     log(msg) {
+      console.log(msg);
       $info.textContent=msg;
     }
   };
