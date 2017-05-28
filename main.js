@@ -36,6 +36,7 @@ LoadedDocument.then(()=>{
   console.log('LoadedDoccument');
 
   const tView = ttgView($id('disp')),
+        tView2 = ttgView($id('disp2')),
         message = infoMessage($id('info'));
 
   message.log('hello.');
@@ -43,7 +44,7 @@ LoadedDocument.then(()=>{
   if (navigator.serviceWorker) {
     navigator.serviceWorker.register('./sw-cash.js')
     .then(()=>{
-      message.log('serviceWorker.register成功。');
+      console.log('serviceWorker.register成功。');
     })
     .catch((err)=>{
       message.log('serviceWorker.register失敗。');
@@ -55,8 +56,17 @@ LoadedDocument.then(()=>{
   }
   tView.setInnerHTML('script init data');
 
-  fetch('./sample.data').then((data) =>{
+  fetch('./sw/sw_version').then((data) =>{
+      return data.text();
+  })
+  .then(message.log);
+
+  fetch('./sw/sample.data').then((data) =>{
       return data.text();
   })
   .then(tView.setInnerHTML);
+  fetch('./sw/sample2.data').then((data) =>{
+      return data.text();
+  })
+  .then(tView2.setInnerHTML);
 });

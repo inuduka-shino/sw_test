@@ -11,19 +11,55 @@ self.addEventListener('install', (event) => {
 
 });
 
-const constTest='const test';
+const urlPattern = /^([^:]+):\/\/([^/]*)\/([^?]*)(\?[^#]*)?(#.*)?$/;
 
+function parseURL(url) {
+  const urlStruct = urlPattern.exec(url);
+
+  //console.log(`url:${url}`);
+
+  return {
+    scheme: urlStruct[1],
+    authorityComponent: urlStruct[2],
+    path: urlStruct[3],
+    query: urlStruct[4],
+    fragment: urlStruct[5],
+  };
+}
+
+const swPathPattern = /^[^/]+\/sw\/(.*)$/;
+
+function checkSWPath(path) {
+    const matchResult = swPathPattern.exec(path);
+
+    if (matchResult) {
+      return matchResult[1];
+    }
+
+    return null;
+}
+
+//eslint-disable-next-line max-statements
 self.addEventListener('fetch', (event) => {
   console.log('fire fetch event');
   console.log(event.request);
 
-  const requestUrl = event.request.url;
-  // const urlPattern = /[^:]+:\/\/[^\/]+\/([^#]*)/;
+  const requestUrl = parseURL(event.request.url),
+        swPath = checkSWPath(requestUrl.path);
 
-  console.log(`constTest:${constTest}`);
+  console.log(`swPath:${swPath}`);
+  if (swPath === null) {
+    return;
+  }
+  console.log(`swPath:${swPath}`);
 
-  console.log(`url:${requestUrl}`);
-  console.log(`location:${location.pathname}`);
+  if (swPath === 'sw_version') {
+      event.respondWith(new Response('sw_version: 2015/07/29 08:24'));
+  } else if (swPath === 'sample.data') {
+      event.respondWith(fetch('sample-A.data'));
+  } else if (swPath === 'sample2.data') {
+      event.respondWith(fetch('https://inuduka-shino.github.io/sw_test/sample.data'));
+  }
 
   /*event.respondWith(
     caches.match(event.request)
