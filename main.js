@@ -1,7 +1,28 @@
 /*eslint-env browser */
 /*eslint no-console: off */
+/*global Promise */
 
 console.log('loaded main.js');
+
+const regitServiceWorker = (()=>{
+  if (navigator.serviceWorker) {
+    return navigator.serviceWorker.register('./sw-cash.js')
+    .then(()=>{
+      console.log('serviceWorker.register成功。');
+    })
+    .catch((err)=>{
+      console.log('serviceWorker.register失敗。');
+      throw err;
+    });
+  }
+
+  return Promise.resolve()
+  .then(()=>{
+    console.log('serviceWorkerが使えません。');
+    throw new Error('navigator.serviceWorker undefined.');
+  });
+})();
+
 
 const $id=document.getElementById.bind(document);
 
@@ -32,41 +53,37 @@ function ttgView($disp) {
   };
 }
 
-LoadedDocument.then(()=>{
+const persedDocument= LoadedDocument.then(()=>{
   console.log('LoadedDoccument');
 
-  const tView = ttgView($id('disp')),
-        tView2 = ttgView($id('disp2')),
-        message = infoMessage($id('info'));
+  const docElements = {
+      tView: ttgView($id('disp')),
+      tView2: ttgView($id('disp2')),
+      message: infoMessage($id('info'))
+    };
 
-  message.log('hello.');
+  docElements.message.log('hello.');
+  docElements.tView.setInnerHTML('script init data');
 
-  if (navigator.serviceWorker) {
-    navigator.serviceWorker.register('./sw-cash.js')
-    .then(()=>{
-      console.log('serviceWorker.register成功。');
-    })
-    .catch((err)=>{
-      message.log('serviceWorker.register失敗。');
-      throw err;
-    });
-  } else {
-    //console.log(`navigator.serviceWorker:${typeof navigator.serviceWorker}`);
-    message.log('serviceWorkerが使えません。');
-  }
-  tView.setInnerHTML('script init data');
+  return docElements;
+});
+
+
+Promise.all([persedDocument,regitServiceWorker]).then((values)=>{
+  const doc = values[0];
 
   fetch('./sw/sw_version').then((data) =>{
       return data.text();
   })
-  .then(message.log);
+  .then(doc.message.log);
 
   fetch('./sw/sample.data').then((data) =>{
       return data.text();
   })
-  .then(tView.setInnerHTML);
+  .then(doc.tView.setInnerHTML);
+
   fetch('./sw/sample2.data').then((data) =>{
       return data.text();
   })
-  .then(tView2.setInnerHTML);
+  .then(doc.tView2.setInnerHTML);
 });
