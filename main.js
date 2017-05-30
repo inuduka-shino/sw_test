@@ -13,6 +13,20 @@ const regitServiceWorker = (()=>{
     .catch((err)=>{
       console.log('serviceWorker.register失敗。');
       throw err;
+    })
+    .then(()=>{
+      return fetch('./sw/sw_version').then((data) =>{
+            if (data.ok) {
+              return data.text();
+            }
+
+            throw new Error('sw_version is no response.');
+        })
+        .then((version)=>{
+
+            return {version};
+        });
+
     });
   }
 
@@ -70,12 +84,10 @@ const persedDocument= LoadedDocument.then(()=>{
 
 
 Promise.all([persedDocument,regitServiceWorker]).then((values)=>{
-  const doc = values[0];
+  const doc = values[0],
+        swInfo = values[1];
 
-  fetch('./sw/sw_version').then((data) =>{
-      return data.text();
-  })
-  .then(doc.message.log);
+  doc.message.log(swInfo.version);
 
   fetch('./sw/sample.data').then((data) =>{
       return data.text();

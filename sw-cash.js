@@ -3,17 +3,17 @@
 /*eslint no-console: off */
 
 //
-const swVersion = 'sw-cash.js(2017/05/30 07:00)';
+const swVersion = 'sw-cash.js(2017/05/31 07:14)';
 
 console.log(`${swVersion} loaded.`);
 
 self.addEventListener('install', (event) => {
   console.log(`${swVersion} install.`);
-   event.waitUntil(self.skipWaiting());
+   //event.waitUntil(self.skipWaiting());
 });
 self.addEventListener('activate', (event) => {
   console.log(`${swVersion} activate.`);
-  event.waitUntil(self.clients.claim());
+  //event.waitUntil(self.clients.claim());
 });
 
 const urlPattern = /^([^:]+):\/\/([^/]*)\/([^?]*)(\?[^#]*)?(#.*)?$/;
@@ -46,8 +46,8 @@ function checkSWPath(path) {
 
 //eslint-disable-next-line max-statements
 self.addEventListener('fetch', (event) => {
-  console.log('fire fetch event');
-  console.log(event.request);
+  //console.log('fire fetch event');
+  //console.log(event.request);
 
   const requestUrl = parseURL(event.request.url),
         swPath = checkSWPath(requestUrl.path);
@@ -65,17 +65,4 @@ self.addEventListener('fetch', (event) => {
   } else if (swPath === 'sample2.data') {
       event.respondWith(fetch('https://inuduka-shino.github.io/sw_test/sample.data'));
   }
-
-  /*event.respondWith(
-    caches.match(event.request)
-      .then(function(response) {
-        // キャッシュがあったのでそのレスポンスを返す
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      }
-    )
-  );
-  */
 });
