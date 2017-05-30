@@ -6,7 +6,7 @@ console.log('loaded main.js');
 
 const regitServiceWorker = (()=>{
   if (navigator.serviceWorker) {
-    return navigator.serviceWorker.register('./sw-cash.js')
+    return navigator.serviceWorker.register('./sw-cache.js')
     .then(()=>{
       console.log('serviceWorker.register成功。');
     })

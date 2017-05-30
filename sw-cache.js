@@ -1,9 +1,9 @@
-/* sw-cash.js */
+/* sw-cache.js */
 /*eslint-env browser */
 /*eslint no-console: off */
 
 //
-const swVersion = 'sw-cash.js(2017/05/31 07:14)';
+const swVersion = 'sw-cash.js(2017/05/31 07:40)';
 
 console.log(`${swVersion} loaded.`);
 
@@ -52,8 +52,10 @@ self.addEventListener('fetch', (event) => {
   const requestUrl = parseURL(event.request.url),
         swPath = checkSWPath(requestUrl.path);
 
-  console.log(`swPath:${swPath}`);
   if (swPath === null) {
+    // normal cache
+
+
     return;
   }
   console.log(`swPath:${swPath}`);
