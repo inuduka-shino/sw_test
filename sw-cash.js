@@ -3,12 +3,17 @@
 /*eslint no-console: off */
 
 //
-console.log('sw-cash.js loaded.');
+const swVersion = 'sw-cash.js(2017/05/31 07:14)';
+
+console.log(`${swVersion} loaded.`);
 
 self.addEventListener('install', (event) => {
-  console.log('fire install event.');
-  console.log(event);
-
+  console.log(`${swVersion} install.`);
+   //event.waitUntil(self.skipWaiting());
+});
+self.addEventListener('activate', (event) => {
+  console.log(`${swVersion} activate.`);
+  //event.waitUntil(self.clients.claim());
 });
 
 const urlPattern = /^([^:]+):\/\/([^/]*)\/([^?]*)(\?[^#]*)?(#.*)?$/;
@@ -41,8 +46,8 @@ function checkSWPath(path) {
 
 //eslint-disable-next-line max-statements
 self.addEventListener('fetch', (event) => {
-  console.log('fire fetch event');
-  console.log(event.request);
+  //console.log('fire fetch event');
+  //console.log(event.request);
 
   const requestUrl = parseURL(event.request.url),
         swPath = checkSWPath(requestUrl.path);
@@ -54,27 +59,10 @@ self.addEventListener('fetch', (event) => {
   console.log(`swPath:${swPath}`);
 
   if (swPath === 'sw_version') {
-      event.respondWith(new Response('sw_version: 2015/07/29 08:24'));
+      event.respondWith(new Response(swVersion));
   } else if (swPath === 'sample.data') {
       event.respondWith(fetch('sample-A.data'));
   } else if (swPath === 'sample2.data') {
       event.respondWith(fetch('https://inuduka-shino.github.io/sw_test/sample.data'));
   }
-
-  /*event.respondWith(
-    caches.match(event.request)
-      .then(function(response) {
-        // キャッシュがあったのでそのレスポンスを返す
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      }
-    )
-  );
-  */
-});
-
-self.addEventListener('activate', () => {
-  console.log('fire activate event.');
 });
