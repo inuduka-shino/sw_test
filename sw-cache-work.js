@@ -3,18 +3,18 @@
 /*eslint no-console: off */
 
 //
-const swVersion = 'sw-cash.js(2017/06/02 07:51)';
+const swVersion = 'sw-cash.js(2017/06/02 07:06)';
 const cacheName = 'sw-test';
 
 console.log(`${swVersion} loaded.`);
 
 self.addEventListener('install', (event) => {
   console.log(`${swVersion} install.`);
-  event.waitUntil(Promise.resolve());
+  event.waitUntil(Promise.resoleve());
 });
 self.addEventListener('activate', (event) => {
   console.log(`${swVersion} activate.`);
-  event.waitUntil(Promise.resolve());
+  event.waitUntil(Promise.resoleve());
 });
 
 const urlPattern = /^([^:]+):\/\/([^/]*)\/([^?]*)(\?[^#]*)?(#.*)?$/;
@@ -45,16 +45,6 @@ function checkSWPath(path) {
     return null;
 }
 
-async function getCacheResponse (req) {
-  //eslint-disable-next-line max-len
-  // ref: https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=ja
-
-  const cache = await caches.open(cacheName);
-  const req2 = req.clone();
-  const resp = await fetch(req);
-
-  return resp;
-}
 //eslint-disable-next-line max-statements
 self.addEventListener('fetch', (event) => {
   //console.log('fire fetch event');
@@ -82,10 +72,39 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (event.request.url.startsWith(location.origin)) {
+
       console.log(`normal cache target:${event.request.url}`);
-      getCacheResponse(event.request).then((response) =>{
-        event.respondWith(response);
-      });
+
+      //eslint-disable-next-line max-len
+      // ref: https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=ja
+      /*
+      event.respondWith(
+        caches.match(event.request)
+       .then((response) => {
+           // キャッシュがあったのでレスポンスを返す
+           if (response) {
+             return response;
+           }
+
+           const fetchRequest = event.request.clone();
+
+           return fetch(fetchRequest).then((response) => {
+              // レスポンスが正しいかをチェック
+              if (!response || response.status !== 200 || response.type !== 'basic') {
+               return response;
+              }
+              const responseToCache = response.clone();
+
+              caches.open(cacheName)
+               .then((cache) => {
+                 cache.put(event.request, responseToCache);
+               });
+
+             return response;
+           });
+         })
+     );
+     */
   }
 
 
