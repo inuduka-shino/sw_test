@@ -3,15 +3,17 @@
 /*eslint no-console: off */
 
 //
-const swVersion = 'sw-cash.js(2017/06/05 07:18)';
+const swVersion = 'sw-cash.js(2017/06/06 06:46)';
 const cacheName = 'sw-test-v1';
 const cacheNamePattern = /^sw-test(|-v[0-9]+)$/;
-const UpdateCheckList = [
+const updateCheckList = [
   '',
   'index.html',
   'main.css',
   'main.js',
-];
+].map((subPath) => {
+  return [location.domain, location.pathname, subPath].join('');
+});
 
 async function deleteOldVerCache() {
   const cacheNames = await caches.keys();
@@ -67,12 +69,14 @@ function checkSWPath(path) {
     return null;
 }
 
-async function getCacheResponse (req) {
+
+async function getCacheResponse0(req) {
   //eslint-disable-next-line max-len
   // ref: https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=ja
 
   const cache = await caches.open(cacheName);
   const cacheResp = await cache.match(req);
+
 
   if (cacheResp) {
     return cacheResp;
@@ -89,6 +93,43 @@ async function getCacheResponse (req) {
 
   return resp;
 }
+
+//eslint-disable-next-line max-statements
+async function getUpdateOrCacheResponse(req) {
+  // Fetch and Cache save
+  const cache = await caches.open(cacheName);
+  const req2 = req.clone();
+  const resp = await fetch(req);
+
+  if (resp.status === 200 && resp.type === 'basic') {
+    const resp2 = resp.clone();
+
+    await cache.put(req2, resp2);
+
+    return resp;
+  }
+  const cacheResp = await cache.match(req);
+
+  if (cacheResp) {
+    return cacheResp;
+  }
+
+  return resp;
+}
+
+async function getCacheResponse(req) {
+  const UpdateMode = req.url in updateCheckList;
+  let resp = null;
+
+  if (UpdateMode) {
+    resp = await getUpdateOrCacheResponse(req);
+  } else {
+    resp = await getCacheResponse0(req);
+  }
+
+  return resp;
+}
+
 //eslint-disable-next-line max-statements
 self.addEventListener('fetch', (event) => {
 
