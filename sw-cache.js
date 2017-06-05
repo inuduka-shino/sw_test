@@ -6,14 +6,24 @@
 const swVersion = 'sw-cash.js(2017/06/06 06:46)';
 const cacheName = 'sw-test-v1';
 const cacheNamePattern = /^sw-test(|-v[0-9]+)$/;
-const updateCheckList = [
-  '',
-  'index.html',
-  'main.css',
-  'main.js',
-].map((subPath) => {
-  return [location.domain, location.pathname, subPath].join('');
-});
+const checkUpdateUrl =(()=>{
+  const checkList =[
+     '',
+     'index.html',
+     'main.css',
+     'main.js',
+   ].map((subPath) => {
+     const pathStruct = location.pathname.split('/');
+
+     pathStruct.splice(-1,1,subPath);
+
+     return [location.origin, pathStruct.join('/')].join('');
+   });
+
+   return (url)=>{
+     return checkList.indexOf(url) >= 0;
+   };
+})();
 
 async function deleteOldVerCache() {
   const cacheNames = await caches.keys();
@@ -99,7 +109,10 @@ async function getUpdateOrCacheResponse(req) {
   // Fetch and Cache save
   const cache = await caches.open(cacheName);
   const req2 = req.clone();
-  const resp = await fetch(req);
+  const resp = await fetch(
+    req,
+    {cache: 'default'}
+  );
 
   if (resp.status === 200 && resp.type === 'basic') {
     const resp2 = resp.clone();
@@ -118,7 +131,7 @@ async function getUpdateOrCacheResponse(req) {
 }
 
 async function getCacheResponse(req) {
-  const UpdateMode = req.url in updateCheckList;
+  const UpdateMode = checkUpdateUrl(req.url);
   let resp = null;
 
   if (UpdateMode) {
