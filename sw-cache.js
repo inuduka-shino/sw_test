@@ -86,18 +86,15 @@ async function getResponseCacheOrFetch(req) {
   const cache = await caches.open(cacheName);
   const cacheResp = await cache.match(req);
 
-
   if (cacheResp) {
     return cacheResp;
   }
   // Fetch and Cache save
-  const req2 = req.clone();
-  const resp = await fetch(req);
+  const resp = await fetch(req.clone());
 
   if (resp.status === 200 && resp.type === 'basic') {
-    const resp2 = resp.clone();
-
-    await cache.put(req2, resp2);
+    // await 不要
+    cache.put(req, resp.clone());
   }
 
   return resp;
@@ -107,19 +104,22 @@ async function getResponseCacheOrFetch(req) {
 async function getResponseUpdateAndCache(req) {
   // Fetch and Cache save
   const cache = await caches.open(cacheName);
-  const req2 = req.clone();
+
   const resp = await fetch(
-    req,
+    req.clone(),
     {cache: 'default'}
   );
 
   if (resp.status === 200 && resp.type === 'basic') {
-    const resp2 = resp.clone();
-
-    await cache.put(req2, resp2);
+    // await は不要
+    cache.put(req, resp.clone());
 
     return resp;
   }
+  if (resp.status === 304) {
+    return resp;
+  }
+
   const cacheResp = await cache.match(req);
 
   if (cacheResp) {
@@ -147,10 +147,11 @@ async function getResponseCacheAndUpdate(req) {
 
     return cacheResp;
   }
+  // キャッシュになければ、fetchを待ってresponseを戻す。
   const resp = await fetchPromise;
 
   if (resp.status === 200 && resp.type === 'basic') {
-    cache.put(req, resp.clone());
+    await cache.put(req, resp.clone());
   }
 
   return resp;
@@ -177,11 +178,11 @@ self.addEventListener('fetch', (event) => {
   const requestUrl = parseURL(event.request.url),
         swPath = checkSWPath(requestUrl.path);
 
-  console.log(`fire fetch event:${event.request.url}`);
+  //console.log(`fire fetch event:${event.request.url}`);
 
   if (swPath !== null) {
     //console.log(`sw special :${event.request.url}`);
-    console.log(`swPath:${swPath}`);
+    // console.log(`swPath:${swPath}`);
 
     if (swPath === 'sw_version') {
       event.respondWith(Promise.resolve(new Response(swVersion)));
