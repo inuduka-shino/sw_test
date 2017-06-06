@@ -3,15 +3,27 @@
 /*eslint no-console: off */
 
 //
-const swVersion = 'sw-cash.js(2017/06/05 07:18)';
+const swVersion = 'sw-cash.js(2017/06/06 06:46)';
 const cacheName = 'sw-test-v1';
 const cacheNamePattern = /^sw-test(|-v[0-9]+)$/;
-const UpdateCheckList = [
-  '',
-  'index.html',
-  'main.css',
-  'main.js',
-];
+const checkUpdateUrl =(()=>{
+  const checkList =[
+     '',
+     'index.html',
+     'main.css',
+     'main.js',
+   ].map((subPath) => {
+     const pathStruct = location.pathname.split('/');
+
+     pathStruct.splice(-1,1,subPath);
+
+     return [location.origin, pathStruct.join('/')].join('');
+   });
+
+   return (url)=>{
+     return checkList.indexOf(url) >= 0;
+   };
+})();
 
 async function deleteOldVerCache() {
   const cacheNames = await caches.keys();
@@ -67,12 +79,13 @@ function checkSWPath(path) {
     return null;
 }
 
-async function getCacheResponse (req) {
+async function getResponseCacheOrFetch(req) {
   //eslint-disable-next-line max-len
   // ref: https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=ja
 
   const cache = await caches.open(cacheName);
   const cacheResp = await cache.match(req);
+
 
   if (cacheResp) {
     return cacheResp;
@@ -89,6 +102,75 @@ async function getCacheResponse (req) {
 
   return resp;
 }
+
+//eslint-disable-next-line max-statements,no-unused-vars
+async function getResponseUpdateAndCache(req) {
+  // Fetch and Cache save
+  const cache = await caches.open(cacheName);
+  const req2 = req.clone();
+  const resp = await fetch(
+    req,
+    {cache: 'default'}
+  );
+
+  if (resp.status === 200 && resp.type === 'basic') {
+    const resp2 = resp.clone();
+
+    await cache.put(req2, resp2);
+
+    return resp;
+  }
+  const cacheResp = await cache.match(req);
+
+  if (cacheResp) {
+    return cacheResp;
+  }
+
+  return resp;
+}
+
+async function getResponseCacheAndUpdate(req) {
+  // あればcache + 次回向けにUpdateチェック
+  const cache = await caches.open(cacheName);
+  const cacheResp = await cache.match(req);
+  const fetchPromise = fetch(
+        req.clone(),
+        {cache: 'default'}
+      );
+
+  if (cacheResp) {
+    fetchPromise.then((resp) =>{
+      if (resp.status === 200 && resp.type === 'basic') {
+        cache.put(req, resp);
+      }
+    });
+
+    return cacheResp;
+  }
+  const resp = await fetchPromise;
+
+  if (resp.status === 200 && resp.type === 'basic') {
+    cache.put(req, resp.clone());
+  }
+
+  return resp;
+}
+
+async function getResponse(req) {
+  const UpdateMode = checkUpdateUrl(req.url);
+  let resp = null;
+
+  if (UpdateMode) {
+    //resp = await getResponseUpdateAndCache(req);
+    resp = await getResponseCacheAndUpdate(req);
+
+  } else {
+    resp = await getResponseCacheOrFetch(req);
+  }
+
+  return resp;
+}
+
 //eslint-disable-next-line max-statements
 self.addEventListener('fetch', (event) => {
 
@@ -114,6 +196,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   if (event.request.url.startsWith(location.origin)) {
-    event.respondWith(getCacheResponse(event.request));
+    event.respondWith(getResponse(event.request));
   }
 });
