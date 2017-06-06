@@ -79,8 +79,7 @@ function checkSWPath(path) {
     return null;
 }
 
-
-async function getCacheResponse0(req) {
+async function getResponseCacheOrFetch(req) {
   //eslint-disable-next-line max-len
   // ref: https://developers.google.com/web/fundamentals/getting-started/primers/service-workers?hl=ja
 
@@ -104,8 +103,8 @@ async function getCacheResponse0(req) {
   return resp;
 }
 
-//eslint-disable-next-line max-statements
-async function getUpdateOrCacheResponse(req) {
+//eslint-disable-next-line max-statements,no-unused-vars
+async function getResponseUpdateAndCache(req) {
   // Fetch and Cache save
   const cache = await caches.open(cacheName);
   const req2 = req.clone();
@@ -130,14 +129,43 @@ async function getUpdateOrCacheResponse(req) {
   return resp;
 }
 
-async function getCacheResponse(req) {
+async function getResponseCacheAndUpdate(req) {
+  // あればcache + 次回向けにUpdateチェック
+  const cache = await caches.open(cacheName);
+  const cacheResp = await cache.match(req);
+  const fetchPromise = fetch(
+        req.clone(),
+        {cache: 'default'}
+      );
+
+  if (cacheResp) {
+    fetchPromise.then((resp) =>{
+      if (resp.status === 200 && resp.type === 'basic') {
+        cache.put(req, resp);
+      }
+    });
+
+    return cacheResp;
+  }
+  const resp = await fetchPromise;
+
+  if (resp.status === 200 && resp.type === 'basic') {
+    cache.put(req, resp.clone());
+  }
+
+  return resp;
+}
+
+async function getResponse(req) {
   const UpdateMode = checkUpdateUrl(req.url);
   let resp = null;
 
   if (UpdateMode) {
-    resp = await getUpdateOrCacheResponse(req);
+    //resp = await getResponseUpdateAndCache(req);
+    resp = await getResponseCacheAndUpdate(req);
+
   } else {
-    resp = await getCacheResponse0(req);
+    resp = await getResponseCacheOrFetch(req);
   }
 
   return resp;
@@ -168,6 +196,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   if (event.request.url.startsWith(location.origin)) {
-    event.respondWith(getCacheResponse(event.request));
+    event.respondWith(getResponse(event.request));
   }
 });

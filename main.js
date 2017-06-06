@@ -19,8 +19,9 @@ const regitServiceWorker = (()=>{
             if (data.ok) {
               return data.text();
             }
+            return null;
 
-            throw new Error('sw_version is no response.');
+            //throw new Error('sw_version is no response.');
         })
         .then((version)=>{
 
@@ -87,6 +88,11 @@ Promise.all([persedDocument,regitServiceWorker]).then((values)=>{
   const doc = values[0],
         swInfo = values[1];
 
+  if (swInfo === null) {
+    doc.message.log('please, reload for servie workers.');
+
+    return;
+  }
   doc.message.log(swInfo.version);
 
   fetch('./sw/sample.data').then((data) =>{
