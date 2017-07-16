@@ -2,9 +2,9 @@
 /*eslint-env node */
 /*eslint no-console: off */
 
-import path from 'path';
-import Koa from 'koa';
-import serv from 'koa-static';
+const path = require('path'),
+      Koa = require('koa'),
+      serv = require('koa-static');
 
 const app = new Koa();
 
@@ -29,4 +29,4 @@ app.use(serv(path.join(__dirname, '/'), {
   extensions: ['html']
 }));
 
-export default app;
+module.exports = app;
